@@ -4,6 +4,8 @@ import getUser from "@/lib/getUser";
 import getUserPosts from "@/lib/getUserPosts";
 import UserPosts from "@/app/users/[userId]/components/UserPosts";
 import type {Metadata} from "next";
+import getAllUsers from "@/lib/getAllUsers";
+import {notFound} from 'next/navigation';
 
 type Params = {
   params: {
@@ -14,6 +16,12 @@ type Params = {
 export const generateMetadata = async ({params: {userId}}: Params): Promise<Metadata> => {
   const userData: Promise<IUser> = getUser(userId);
   const user = await userData;
+
+  if (!user) {
+    return {
+      title: 'User Not Found',
+    }
+  }
 
   return {
     title: user.name,
@@ -28,6 +36,8 @@ const UserPage = async ({params: {userId}}: Params) => {
   // const [user, userPosts] = await Promise.all([userData, userPostsData]);
 
   const user = await userData;
+
+  if (!user.name) return notFound();
 
   return (
     <main>
@@ -49,3 +59,12 @@ const UserPage = async ({params: {userId}}: Params) => {
 };
 
 export default UserPage;
+
+export const generateStaticParams = async () => {
+  const usersData: Promise<IUser[]> = getAllUsers();
+  const users = await usersData;
+
+  return users.map(user => ({
+    userId: user.id.toString()
+  }));
+}
